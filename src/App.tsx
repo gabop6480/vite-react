@@ -1,19 +1,42 @@
 import { useState, useEffect } from 'react';
 import './App.css';
 
+interface PokemonListItem {
+  name: string;
+  url: string;
+}
+
+interface PokemonTypeSlot {
+  type: {
+    name: string;
+  };
+}
+
+interface PokemonDetail {
+  id: number;
+  name: string;
+  sprites: {
+    other: {
+      'official-artwork': {
+        front_default: string | null;
+      };
+    };
+  };
+  types: PokemonTypeSlot[];
+}
+
 function App() {
-  const [pokemones, setPokemones] = useState([]);
-  const [cargando, setCargando] = useState(true);
+  const [pokemones, setPokemones] = useState<PokemonDetail[]>([]);
+  const [cargando, setCargando] = useState<boolean>(true);
 
   useEffect(() => {
     const obtenerPokemones = async () => {
       try {
         const respuesta = await fetch('https://pokeapi.co/api/v2/pokemon?limit=20');
-        const datos = await respuesta.json();
+        const datos: { results: PokemonListItem[] } = await respuesta.json();
 
-        // Obtenemos el detalle de cada Pokémon para extraer su imagen y tipos
         const detalles = await Promise.all(
-          datos.results.map(async (pokemon) => {
+          datos.results.map(async (pokemon: PokemonListItem): Promise<PokemonDetail> => {
             const res = await fetch(pokemon.url);
             return await res.json();
           })
@@ -55,7 +78,7 @@ function App() {
             }}
           >
             <img
-              src={poke.sprites.other['official-artwork'].front_default}
+              src={poke.sprites.other['official-artwork'].front_default ?? ''}
               alt={poke.name}
               style={{ width: '120px', height: '120px' }}
             />
@@ -63,7 +86,7 @@ function App() {
               #{poke.id} {poke.name}
             </h3>
             <p style={{ fontSize: '0.9rem', color: '#666' }}>
-              Tipo: {poke.types.map((t) => t.type.name).join(', ')}
+              Tipo: {poke.types.map((t: PokemonTypeSlot) => t.type.name).join(', ')}
             </p>
           </div>
         ))}
